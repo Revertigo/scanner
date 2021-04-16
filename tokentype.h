@@ -1,5 +1,4 @@
-enum tokenType
-  {
+enum tokenType{
     IDENTIFIER = 258,
     CONSTANT = 259,
     STRING_LITERAL = 260,
@@ -59,4 +58,4 @@ enum tokenType
     BREAK = 314,
     RETURN = 315,
     ERROR = 316
-  };
+};

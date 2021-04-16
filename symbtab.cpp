@@ -40,6 +40,7 @@ void SymbolTable::initReserved(){
         exit(1);
     }
 
+    //Load all reserved words into the table
     string line;
     string delimiter = "\t";
     while (getline(reserved_words, line)){

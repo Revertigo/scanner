@@ -16,16 +16,15 @@ int main(int argc, char* argv[]) {
     shared_ptr<Token> tokenp;		// pointer to token object
     if (argv[1] == string("-t") || argv[1] == string("--tokens")) { // output tokens
         cout << "Type\tText\n\n";
-        while(tokenp = scanner.nextToken()) {
+        while((tokenp = scanner.nextToken())) {
             tokenp->printToken();
         }
     }
 
     if (argv[1] == string("-x") || argv[1] == string("--xref")) {	// output cross-reference
-        while(tokenp = scanner.nextToken());                     // scan the whole file
+        while(scanner.nextToken());                     // scan the whole file
 
         cout << "Variable\tLines\n\n";
         symTab.xref();
     }
-    //inputFile.close();
 }

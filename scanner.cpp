@@ -3,7 +3,8 @@
 //
 
 #include "scanner.h"
-#include <ctype.h>
+#include <cctype>
+#include <memory>
 
 #define HANDLE_DOUBLE_OPERATOR(second_op, tt, text) \
     {                                                \
@@ -15,13 +16,15 @@
         }                                               \
     }
 
-shared_ptr<Token> Scanner:: nextToken()
-{
+shared_ptr<Token> Scanner:: nextToken(){
     string text;
 
-    // passing this in order to access class's methods
-    auto comment = [this]()
-    {
+    /*
+     * I'm using lambada expression since i can't declare private functions
+     * (header structure including members and function has been predetermined)
+     */
+    // passing 'this' in order to access class's methods
+    auto comment = [this](){
         char c, prev = 0;
         while (nextChar()){
             c = ch;
@@ -32,25 +35,30 @@ shared_ptr<Token> Scanner:: nextToken()
         }
     };
 
-    auto comment_line = [this]()
-    {
+    auto comment_line = [this](){
         while (nextChar() && ch != '\n');
     };
 
-    auto read_number = [this]()
-    {
-        string number = "";
-        regex number_pattern(R"([0-9Ee+\-.])"); //On whitespace regex won't match
-        while(nextChar() && regex_match(string(1,ch), number_pattern)){
-            number += ch;
+    auto read_token = [this](regex pattern){
+        string token = "";
+        while(nextChar() && regex_match(string(1,ch), pattern)){
+            token += ch;
         }
         inputFile.unget();//return last read character to the file
 
-        return number;
+        return token;
     };
 
-    auto read_char = [this]()
-    {
+    //passing read_token in order to call read_token
+    auto read_number = [read_token](){
+        return read_token(regex(R"([0-9Ee+\-.])"));
+    };
+
+    auto read_word = [read_token](){
+        return read_token(regex(R"([\w\d])"));
+    };
+
+    auto read_char = [this](){
         string ch_str = "";
         if(nextChar()){
             ch_str = ch;
@@ -62,8 +70,7 @@ shared_ptr<Token> Scanner:: nextToken()
         return ch_str;
     };
 
-    auto read_string = [this]()
-    {
+    auto read_string = [this](){
         string str = "";
         while(nextChar() && ch != '\"'){
             str += ch;
@@ -72,24 +79,10 @@ shared_ptr<Token> Scanner:: nextToken()
         return str;
     };
 
-    auto read_word = [this]()
-    {
-        string word = "";
-        regex word_pattern(R"([\w\d])"); //On whitespace regex won't match
-        while(nextChar() && regex_match(string(1,ch), word_pattern)){
-            word += ch;
-        }
-        inputFile.unget();//return last read character to the file
-
-        return word;
-    };
-
     while(nextChar()) {
         //Check for start of comment /*
         if(ch == '/'){
-            if(!nextChar()){
-                return nullptr;
-            }
+            nextChar();//Read next char
             if(ch == '*'){
                 //Current state is inside /* comment
                 comment();
@@ -106,30 +99,30 @@ shared_ptr<Token> Scanner:: nextToken()
 
         switch (ch) { // each character represents itself
             case '+' :
-                HANDLE_DOUBLE_OPERATOR('+', INC_OP, "++");
+                HANDLE_DOUBLE_OPERATOR('+', INC_OP, "++")
             case '-' :
                 if(inputFile.peek() == '-'){
                     nextChar();
-                    return shared_ptr<Token> (new Token(DEC_OP, "--"));
+                    return make_shared<Token> (DEC_OP, "--");
                 }else if(inputFile.peek() == '>'){
                     nextChar();
-                    return shared_ptr<Token> (new Token(PTR_OP, "->"));
+                    return make_shared<Token> (PTR_OP, "->");
                 }
                 else{
                     goto single_char;
                 }
             case '&' :
-                HANDLE_DOUBLE_OPERATOR('&', AND_OP, "&&");
+                HANDLE_DOUBLE_OPERATOR('&', AND_OP, "&&")
             case '|' :
-                HANDLE_DOUBLE_OPERATOR('|', OR_OP, "||");
+                HANDLE_DOUBLE_OPERATOR('|', OR_OP, "||")
             case '<' :
-                HANDLE_DOUBLE_OPERATOR('=', LE_OP, "<=");
+                HANDLE_DOUBLE_OPERATOR('=', LE_OP, "<=")
             case '>' :
-                HANDLE_DOUBLE_OPERATOR('=', GE_OP, ">=");
+                HANDLE_DOUBLE_OPERATOR('=', GE_OP, ">=")
             case '=' :
-                HANDLE_DOUBLE_OPERATOR('=', EQ_OP, "==");
+                HANDLE_DOUBLE_OPERATOR('=', EQ_OP, "==")
             case '!' :
-                HANDLE_DOUBLE_OPERATOR('=', NE_OP, "!=");
+                HANDLE_DOUBLE_OPERATOR('=', NE_OP, "!=")
 
             case ';' :
             case '{' :
@@ -148,8 +141,7 @@ shared_ptr<Token> Scanner:: nextToken()
             case '^' :
             case '?' :
 single_char:
-                return shared_ptr<Token>
-                        (new Token(static_cast<tokenType>(ch), string(1, ch)));
+                return make_shared<Token>(static_cast<tokenType>(ch), string(1, ch));
 
         }
 
@@ -161,9 +153,9 @@ single_char:
                                             regex(R"((\d)+[Ee][+-]?(\d)+)"),   //123E4
                                             regex(R"((\d)*\.(\d)+([Ee][+-]?(\d)+)?)"), //x.123
                                             regex(R"((\d)+\.(\d)*([Ee][+-]?(\d)+)?)")}; //123.x
-            for(auto pattern: number_patterns){
+            for(const auto & pattern: number_patterns){
                 if(regex_match(text, pattern)){
-                    return shared_ptr<Token>(new Token(CONSTANT, text));
+                    return make_shared<Token>(CONSTANT, text);
                 }
             }
 
@@ -176,7 +168,7 @@ single_char:
             regex char_pattern(R"(\'[^\']\')");
 
             if(regex_match(text, char_pattern)){
-                return shared_ptr<Token>(new Token(CONSTANT, text));
+                return make_shared<Token>(CONSTANT, text);
             }
 
             goto error;
@@ -188,7 +180,7 @@ single_char:
             regex str_pattern(R"(\"[^\"]*\")");
 
             if(regex_match(text, str_pattern)){
-                return shared_ptr<Token>(new Token(STRING_LITERAL, text));
+                return make_shared<Token>(STRING_LITERAL, text);
             }
 
             goto error;
@@ -221,5 +213,5 @@ single_char:
     return nullptr;
 
 error:
-    return shared_ptr<Token>(new Token(ERROR, text));
+    return make_shared<Token>(ERROR, text);
 }
