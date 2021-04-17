@@ -147,7 +147,8 @@ single_char:
 
         //Scan for number
         if(isdigit(ch)){
-            text = ch + read_number();
+            text = ch; //since 'ch' might change due to 'read_number' function call
+            text += read_number();
             vector<regex> number_patterns { regex(R"(0)"), //0
                                             regex(R"([1-9](\d)*)"), //104
                                             regex(R"((\d)+[Ee][+-]?(\d)+)"),   //123E4
@@ -188,7 +189,8 @@ single_char:
 
         //Scan for words
         if(isalpha(ch)){
-            text = ch + read_word();
+            text = ch;
+            text += read_word();
             regex word_pattern(R"(\w(\w|\d)*)");
             //Check if token is valid word
             if(regex_match(text, word_pattern)){
