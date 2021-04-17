@@ -45,10 +45,11 @@ void SymbolTable::initReserved(){
     string delimiter = "\t";
     while (getline(reserved_words, line)){
         size_t pos = line.find(delimiter);
+        //Read first token
         string text = line.substr(0, pos);
-        line.erase(0, pos + delimiter.length());
-        pos = line.find(delimiter);
-        string enum_type = line.substr(0, pos);
+        //Read second token
+        string enum_type = line.substr(pos + 1);
+        
         auto token_type = static_cast<tokenType>(stoi(enum_type));
         shared_ptr<Token> token(new Token(token_type, text));
         insertToken(text, token);
