@@ -1,6 +1,7 @@
 //
 // Created by dekel on 4/13/21.
 //
+#include <sstream>
 #include "symtab.h"
 
 using namespace std;
@@ -42,16 +43,12 @@ void SymbolTable::initReserved(){
 
     //Load all reserved words into the table
     string line;
-    string delimiter = "\t";
+    string text;
+    int enum_type;
     while (getline(reserved_words, line)){
-        size_t pos = line.find(delimiter);
-        //Read first token
-        string text = line.substr(0, pos);
-        //Read second token
-        string enum_type = line.substr(pos + 1);
-        
-        auto token_type = static_cast<tokenType>(stoi(enum_type));
-        shared_ptr<Token> token(new Token(token_type, text));
+        istringstream iss(line);
+        iss >> text >> enum_type; //Read line to variables
+        shared_ptr<Token> token(new Token(static_cast<tokenType>(enum_type), text));
         insertToken(text, token);
     }
 }
