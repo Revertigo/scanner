@@ -165,10 +165,11 @@ single_char:
 
         //Scan for Char
         if(ch == '\''){
-            text = '\'' + read_char() + '\'';
+            text = read_char();
+            string literal_char = '\'' + text + '\'';
             regex char_pattern(R"(\'[^\']\')");
 
-            if(regex_match(text, char_pattern)){
+            if(regex_match(literal_char, char_pattern)){
                 return make_shared<Token>(CONSTANT, text);
             }
 
@@ -177,10 +178,11 @@ single_char:
 
         //Scan for String
         if(ch == '\"'){
-            text = "\"" + read_string() + "\"";
+            text = read_string();
+            string literal_string = "\"" + text + "\"";
             regex str_pattern(R"(\"[^\"]*\")");
 
-            if(regex_match(text, str_pattern)){
+            if(regex_match(literal_string, str_pattern)){
                 return make_shared<Token>(STRING_LITERAL, text);
             }
 
