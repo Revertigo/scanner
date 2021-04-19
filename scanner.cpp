@@ -108,9 +108,8 @@ shared_ptr<Token> Scanner:: nextToken(){
                     nextChar();
                     return make_shared<Token> (PTR_OP, "->");
                 }
-                else{
-                    goto single_char;
-                }
+                goto single_char;
+
             case '&' :
                 HANDLE_DOUBLE_OPERATOR('&', AND_OP, "&&")
             case '|' :
@@ -123,6 +122,11 @@ shared_ptr<Token> Scanner:: nextToken(){
                 HANDLE_DOUBLE_OPERATOR('=', EQ_OP, "==")
             case '!' :
                 HANDLE_DOUBLE_OPERATOR('=', NE_OP, "!=")
+            case '.':
+                if(isdigit(inputFile.peek())){
+                    break;
+                }
+                goto single_char;
 
             case ';' :
             case '{' :
@@ -133,7 +137,6 @@ shared_ptr<Token> Scanner:: nextToken(){
             case ')' :
             case '[' :
             case ']' :
-            case '.' :
             case '~' :
             case '*' :
             case '/' :
@@ -142,11 +145,10 @@ shared_ptr<Token> Scanner:: nextToken(){
             case '?' :
 single_char:
                 return make_shared<Token>(static_cast<tokenType>(ch), string(1, ch));
-
         }
 
         //Scan for number
-        if(isdigit(ch)){
+        if(ch == '.' || isdigit(ch)){
             text = ch; //since 'ch' might change due to 'read_number' function call
             text += read_number();
             vector<regex> number_patterns { regex(R"(0)"), //0
